@@ -2,6 +2,7 @@ package tc.catseye.etcha;
 
 // Etcha.java
 // Ridiculous over-implementation of the Etcha programming language.
+// I hereby place this work into the public domain.
 // Chris Pressey, Cat's Eye Technologies.
 // $Id: Etcha.java 257 2009-10-04 03:21:43Z cpressey $
 

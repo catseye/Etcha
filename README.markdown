@@ -67,8 +67,8 @@ storage, the playfield cannot be truly unbounded, and there will come a
 point in a long enough program execution, entirely dependent on the
 capabilities of the hardware and the implementation, where a pixel
 change cannot be correctly stored. The behaviour after this point is
-undefined. *Such **m**icro**c**omputer implementations of Etcha may be
-marketed under the name "MC Etcha".*
+undefined. *Such (m)icro(c)omputer implementations of Etcha may be
+marketed under the name "MC Etcha"*.
 
 Cat's Eye Technologies provides an implementation of Etcha written in
 the Java[TM] programming language. This implementation attempts to
@@ -80,6 +80,9 @@ interpretation of that state, and the Controller is the interpreter's
 behaviour with respect to the View. For example, the Model exposes the
 pen up/down semantics, but it is the Controller that implements the rule
 that `>>>>` toggles the pen position.
+
+Cat's Eye Technologies' ridiculously over-engineering implementation of
+Etcha is in the public domain.
 
 Happy Etchin'!  
 Chris Pressey  
