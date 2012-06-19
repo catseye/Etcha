@@ -47,6 +47,22 @@ an `>` instruction is executed, the pen's position is toggled from up to
 down or vice versa. These executions need not be consecutive; there may
 be any number of intervening instructions executed.
 
+Examples
+--------
+
+    -> Tests for functionality "Interpret Etcha Program"
+
+    -> Functionality "Interpret Etcha Program" is implemented by shell
+    -> command "java -cp bin tc.catseye.etcha.Main %(test-file)"
+
+    | >+++>+++>+++>+++>[+]>>>>+
+    = ----
+    = #####
+    =    # 
+    =    # 
+    =  ### 
+    = ----
+
 Computational Class
 -------------------
 
