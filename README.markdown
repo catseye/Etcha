@@ -97,7 +97,7 @@ behaviour with respect to the View. For example, the Model exposes the
 pen up/down semantics, but it is the Controller that implements the rule
 that `>>>>` toggles the pen position.
 
-Cat's Eye Technologies' ridiculously over-engineering implementation of
+Cat's Eye Technologies' ridiculously over-engineered implementation of
 Etcha is in the public domain.
 
 Happy Etchin'!  
