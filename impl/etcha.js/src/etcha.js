@@ -7,46 +7,12 @@
  */
 
 /*
-class Etcha extends TextBasedLanguage<EtchaState> {
-    public String getName() {
-        return "Etcha";
-    }
+ * requires yoob.Controller
+ * requires yoob.Playfield
+ * requires yoob.Cursor
+ */
 
-    public int numPlayfields() {
-        return 1;
-    }
-
-    public int numTapes() {
-        return 0;
-    }
-
-    public boolean hasInput() {
-        return false;
-    }
-
-    public boolean hasOutput() {
-        return false;
-    }
-
-    public EtchaState importFromText(String text) {
-        EtchaState s = new EtchaState();
-        s.setProgramText(text);
-        return s;
-    }
-
-    private static final String[][] properties = {
-        {"Author", "Chris Pressey"},
-        {"Implementer", "Chris Pressey"},
-        {"Implementation notes",
-         "This implementation uses a yoob playfield as data " +
-         "store/output."},
-    };
-
-    public String[][] getProperties() {
-        return properties;
-    }
-}
-
+/*
 class EtchaPlayfield extends BasicPlayfield<BitElement> {
     protected BasicCursor<BitElement> turtle;
     public EtchaPlayfield() {
@@ -256,39 +222,22 @@ public class EtchaState implements State {
 */
 
 
-/*
- * requires yoob.Controller
- * requires yoob.Playfield
- * requires yoob.Cursor
- */
+
+
 function EtchaPlayfield() {
-    this.setDefault(' ');
+    this.setDefault(0);
 
-    this.increment = function(x, y) {
+    this.toggle = function(x, y) {
         var data = this.get(x, y);
-        if (data === ' ') {
-            data = '#';
-        } else if (data === '#') {
-            data = '@';
-        } else if (data === '@') {
-            data = ' ';
-        }
-        this.put(x, y, data);
-    };
-
-    this.decrement = function(x, y) {
-        var data = this.get(x, y);
-        if (data === ' ') {
-            data = '@';
-        } else if (data === '@') {
-            data = '#';
-        } else if (data === '#') {
-            data = ' ';
-        }
-        this.put(x, y, data);
+        this.put(x, y, data === 0 ? 1 : 0);
     };
 };
 EtchaPlayfield.prototype = new yoob.Playfield();
+
+
+function EtchaTurtle() {
+};
+EtchaTurtle.prototype = new yoob.Cursor();
 
 
 function EtchaController() {
@@ -298,80 +247,102 @@ function EtchaController() {
 
     var p;
     var ip;
-    var dp;
+    var program;
+    var pc;
+    var pendown;
+    var pencounter;
 
     this.init = function(c) {
         p = new EtchaPlayfield();
-
-        ip = new yoob.Cursor(0, 0, 1, 1);
-        ip.drawContext = function(ctx, x, y, cellWidth, cellHeight) {
-            ctx.fillStyle = "#ff5080";
-            ctx.fillRect(x, y, cellWidth, cellHeight);
-        };
-
-        dp = new yoob.Cursor(0, 0, 0, 0);
-        dp.drawContext = function(ctx, x, y, cellWidth, cellHeight) {
-            ctx.fillStyle = "#50ff80";
-            ctx.fillRect(x, y, cellWidth, cellHeight);
-        };
+        ip = new EtchaTurtle(0, 0, 0, -1);
         canvas = c;
         ctx = canvas.getContext('2d');
+        pendown = true;
+        pencounter = 0;
     };
 
     this.draw = function() {
-        p.drawCanvas(canvas, undefined, 20, [ip, dp]);
+        p.drawCanvas(canvas, undefined, 20, [ip]);
     };
 
     this.step = function() {
-        var instr = p.get(ip.x, ip.y);
-
-        if (instr === '@') {
-            var data = p.get(dp.x, dp.y);
-            if (data === ' ') {
+        var instruction = program.charAt(pc);
+        switch (instruction) {
+            case '+':
+                // + -- equivalent to FD 1
+                if (pendown) {
+                    p.toggle(ip.x, ip.y);
+                }
+                ip.advance();
+                break;
+            case '>':
+                // > -- equivalent to RT 90; toggles PU/PD every 4 executions
                 ip.rotateClockwise();
-            } else if (data == '#') {
-                ip.rotateCounterclockwise();
-            }
-        } else if (instr === '#') {
-            if (ip.isHeaded(0, -1)) {
-                dp.y--;
-                ip.advance();
-            } else if (ip.isHeaded(0, 1)) {
-                dp.y++;
-                ip.advance();
-            } else if (ip.isHeaded(1, 0)) {
-                dp.x++;
-                ip.advance();
-            } else if (ip.isHeaded(-1, 0)) {
-                dp.x--;
-                ip.advance();
-            } else if (ip.isHeaded(-1, -1) || ip.isHeaded(1, -1)) {
-                p.increment(dp.x, dp.y);
-            } else if (ip.isHeaded(-1, 1) || ip.isHeaded(1, 1)) {
-                p.decrement(dp.x, dp.y);
-            }
+                ip.rotateClockwise();
+                pencounter++;
+                pencounter %= 4;
+                if (pencounter === 0) {
+                    pendown = !pendown;
+                }
+                break;
+            /*
+            case '[':
+                // [ WHILE Begin a while loop
+                if (ip.get().isZero()) {
+                    // skip forwards to matching ]
+                    int depth = 0;
+                    for (;;) {
+                        if (program.charAt(pc) == '[') {
+                            depth++;
+                        } else if (program.charAt(pc) == ']') {
+                            depth--;
+                            if (depth == 0)
+                                break;
+                        }
+                        pc++;
+                        if (pc >= program.length()) {
+                            halted = true;
+                            return errors;
+                        }
+                    }
+                }
+                break;
+            case ']':
+                // ] END End a while loop
+                // skip backwards to matching ]
+                int depth = 0;
+                for (;;) {
+                    if (program.charAt(pc) == '[') {
+                        depth--;
+                    } else if (program.charAt(pc) == ']') {
+                        depth++;
+                    }
+                    pc--;
+                    if (depth == 0 || pc < 0)
+                        break;
+                }
+                break;
+            */
+            default:
+                // NOP
+                break;
         }
 
-        ip.advance();
+        pc++;
+        if (pc >= program.length()) {
+            halted = true;
+        }
+
         this.draw();
     };
 
     this.load = function(text) {
         p.clear();
         p.load(0, 0, text);
-        p.foreach(function (x, y, value) {
-            if (value === '$') {
-                ip.x = x;
-                ip.y = y;
-                return ' ';
-            } else if (value === '%') {
-                dp.x = x;
-                dp.y = y;
-                return ' ';
-            }
-        });
-        ip.dx = 1;
-        ip.dy = 1;
+        ip.x = 0;
+        ip.y = 0;
+        ip.dx = 0;
+        ip.dy = -1;
         this.draw();
     };
 };
