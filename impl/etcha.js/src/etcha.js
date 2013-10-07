@@ -10,81 +10,6 @@
  * requires yoob.PlayfieldCanvasView
  */
 
-/*
-public class EtchaState implements State {
-    public List<Error> step(World world) {
-        ArrayList<Error> errors = new ArrayList<Error>();
-        BasicCursor<BitElement> ip = (BasicCursor<BitElement>)pf.getCursor(0);
-        char instruction = program.charAt(pc);
-        switch (instruction) {
-            case '+':
-                // + -- equivalent to FD 1
-                if (pendown) {
-                    ip.set(ip.get().invert());
-                }
-                ip.advance();
-                break;
-            case '>':
-                // > -- equivalent to RT 90; toggles PU/PD every 4 executions
-                ip.rotate(90);
-                pencounter++;
-                pencounter %= 4;
-                if (pencounter == 0) {
-                    pendown = !pendown;
-                }
-                break;
-            case '[':
-                // [ WHILE Begin a while loop
-                if (ip.get().isZero()) {
-                    // skip forwards to matching ]
-                    int depth = 0;
-                    for (;;) {
-                        if (program.charAt(pc) == '[') {
-                            depth++;
-                        } else if (program.charAt(pc) == ']') {
-                            depth--;
-                            if (depth == 0)
-                                break;
-                        }
-                        pc++;
-                        if (pc >= program.length()) {
-                            halted = true;
-                            return errors;
-                        }
-                    }
-                }
-                break;
-            case ']':
-                // ] END End a while loop
-                // skip backwards to matching ]
-                int depth = 0;
-                for (;;) {
-                    if (program.charAt(pc) == '[') {
-                        depth--;
-                    } else if (program.charAt(pc) == ']') {
-                        depth++;
-                    }
-                    pc--;
-                    if (depth == 0 || pc < 0)
-                        break;
-                }
-                break;
-            default:
-                // NOP
-                break;
-        }
-
-        pc++;
-        if (pc >= program.length()) {
-            halted = true;
-        }
-
-        return errors;
-    }
-}
-*/
-
-
 function EtchaPlayfield() {
     this.setDefault(0);
 
@@ -94,6 +19,7 @@ function EtchaPlayfield() {
     };
 };
 EtchaPlayfield.prototype = new yoob.Playfield();
+
 
 function EtchaPlayfieldView() {
     this.drawCell = function(ctx, value, playfieldX, playfieldY,
@@ -163,7 +89,7 @@ function EtchaController() {
                 break;
             case '[':
                 // [ WHILE Begin a while loop
-                if (ip.get() === 0) {
+                if (p.get(ip.x, ip.y) === 0) {
                     // skip forwards to matching ]
                     var depth = 0;
                     for (;;) {
