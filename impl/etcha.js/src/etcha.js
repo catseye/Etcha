@@ -10,37 +10,10 @@
  * requires yoob.Controller
  * requires yoob.Playfield
  * requires yoob.Cursor
+ * requires yoob.PlayfieldCanvasView
  */
 
 /*
-class EtchaPlayfield extends BasicPlayfield<BitElement> {
-    protected BasicCursor<BitElement> turtle;
-    public EtchaPlayfield() {
-        super(BitElement.ZERO);
-        this.turtle = new BasicCursor<BitElement>(this);
-        turtle.setDelta(0, -1);
-        clear();
-    }
-
-    public EtchaPlayfield clone() {
-        EtchaPlayfield c = new EtchaPlayfield();
-        c.copyBackingStoreFrom(this);
-        c.turtle = turtle.clone();
-        c.turtle.setPlayfield(c);
-        return c;
-    }
-
-    public int numCursors() {
-        return 1;
-    }
-
-    public BasicCursor<BitElement> getCursor(int index) {
-        if (index == 0)
-            return turtle;
-        return null;
-    }
-}
-
 class EtchaPlayfieldView extends BasicPlayfieldView {
     public void render(Graphics g, Element e, int x, int y, int w, int h) {
         BitElement be = (BitElement)e;
@@ -247,22 +220,26 @@ function EtchaController() {
 
     var p;
     var ip;
+    var view;
     var program;
     var pc;
     var pendown;
     var pencounter;
 
     this.init = function(c) {
+        canvas = c;
         p = new EtchaPlayfield();
         ip = new EtchaTurtle(0, 0, 0, -1);
-        canvas = c;
+        view = new yoob.PlayfieldCanvasView().init(p, canvas)
+            .setCursors([ip])
+            .setCellDimensions(12, 12);
         ctx = canvas.getContext('2d');
         pendown = true;
         pencounter = 0;
     };
 
     this.draw = function() {
-        p.drawCanvas(canvas, undefined, 20, [ip]);
+        view.draw();
     };
 
     this.step = function() {
@@ -329,7 +306,7 @@ function EtchaController() {
         }
 
         pc++;
-        if (pc >= program.length()) {
+        if (pc >= program.length) {
             halted = true;
         }
 
@@ -338,7 +315,7 @@ function EtchaController() {
 
     this.load = function(text) {
         p.clear();
-        p.load(0, 0, text);
+        program = text;
         ip.x = 0;
         ip.y = 0;
         ip.dx = 0;
