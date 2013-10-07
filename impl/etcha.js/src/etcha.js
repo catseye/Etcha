@@ -1,8 +1,5 @@
 /*
  * An EtchaController implements the semantics of Etcha.
- * ALTHOUGH IT SHOULD BE NOTED, THAT, CURRENTLY THE SEMANTICS
- * IMPLEMENTED, BY ETCHACONTROLLER ARE SUSPICIOUSLY SIMILAR TO
- * THE SMENATICS OF GEMOOY AND, NOT, AT ALL RESEMBLE ETCHA YET.
  * The source code in this file has been placed into the public domain.
  */
 
@@ -14,65 +11,7 @@
  */
 
 /*
-class EtchaPlayfieldView extends BasicPlayfieldView {
-    public void render(Graphics g, Element e, int x, int y, int w, int h) {
-        BitElement be = (BitElement)e;
-        if (be.getBoolean()) {
-            g.setColor(Color.black);
-        } else {
-            g.setColor(Color.white);
-        }
-        g.fillRect(x, y, w, h);
-    }
-
-    public void render(Graphics g, Cursor c, int x, int y, int w, int h) {
-        g.setColor(Color.blue);
-        g.drawRoundRect(x - 1, y - 1, w + 2, h + 2, w / 4, h / 4);
-        if (c instanceof BasicCursor) {
-            BasicCursor bc = (BasicCursor)c;
-            int cx = x + (w/2);
-            int cy = y + (h/2);
-            int dx = bc.getDeltaX().intValue();
-            int dy = bc.getDeltaY().intValue();
-            int ex = cx + (dx * w);
-            int ey = cy + (dy * h);
-            g.drawLine(cx, cy, ex, ey);
-        }
-    }
-}
-
 public class EtchaState implements State {
-    protected EtchaPlayfield pf;
-    protected EtchaPlayfieldView pfView;
-    protected int pencounter = 0;
-    protected boolean pendown = true;
-    protected boolean halted = false;
-    protected String program;
-    protected int pc = 0;
-    private static final Etcha language = new Etcha();
-
-    public EtchaState() {
-        pf = new EtchaPlayfield();
-        BasicCursor<BitElement> ip = (BasicCursor<BitElement>)pf.getCursor(0);
-        ip.setDelta(0, -1);
-        pfView = new EtchaPlayfieldView();
-    }
-    
-    public Language getLanguage() {
-        return language;
-    }
-
-    public EtchaState clone() {
-        EtchaState c = new EtchaState();
-        c.pf = pf.clone();
-        c.program = program;
-        c.pc = pc;
-        c.halted = halted;
-        c.pencounter = pencounter;
-        c.pendown = pendown;
-        return c;
-    }
-
     public List<Error> step(World world) {
         ArrayList<Error> errors = new ArrayList<Error>();
         BasicCursor<BitElement> ip = (BasicCursor<BitElement>)pf.getCursor(0);
@@ -142,59 +81,8 @@ public class EtchaState implements State {
 
         return errors;
     }
-
-    public Playfield getPlayfield(int index) {
-        if (index == 0)
-            return pf;
-        return null;
-    }
-
-    public Tape getTape(int index) {
-        return null;
-    }
-
-    public String getProgramText() {
-        return program;
-    }
-
-    public int getProgramPosition() {
-        return pc;
-    }
-
-    public List<Error> setProgramText(String text) {
-        ArrayList<Error> errors = new ArrayList<Error>();
-        program = text;
-        return errors;
-    }
-
-    public View getPlayfieldView(int index) {
-        if (index == 0)
-            return pfView;
-        return null;
-    }
-
-    public View getTapeView(int index) {
-        return null;
-    }
-
-    public String exportToText() {
-        return program;
-    }
-
-    public boolean hasHalted() {
-        return halted;
-    }
-
-    public boolean needsInput() {
-        return false;
-    }
-
-    public void setOption(String name, boolean value) {
-    }
 }
 */
-
-
 
 
 function EtchaPlayfield() {
@@ -206,6 +94,15 @@ function EtchaPlayfield() {
     };
 };
 EtchaPlayfield.prototype = new yoob.Playfield();
+
+function EtchaPlayfieldView() {
+    this.drawCell = function(ctx, value, playfieldX, playfieldY,
+                             canvasX, canvasY, cellWidth, cellHeight) {
+        ctx.fillStyle = value === 0 ? "white" : "black";
+        ctx.fillRect(canvasX, canvasY, cellWidth, cellHeight);
+    };
+};
+EtchaPlayfieldView.prototype = new yoob.PlayfieldCanvasView();
 
 
 function EtchaTurtle() {
@@ -225,17 +122,18 @@ function EtchaController() {
     var pc;
     var pendown;
     var pencounter;
+    var halted;
 
     this.init = function(c) {
         canvas = c;
         p = new EtchaPlayfield();
         ip = new EtchaTurtle(0, 0, 0, -1);
-        view = new yoob.PlayfieldCanvasView().init(p, canvas)
+        view = new EtchaPlayfieldView();
+        view.init(p, canvas)
             .setCursors([ip])
             .setCellDimensions(12, 12);
         ctx = canvas.getContext('2d');
-        pendown = true;
-        pencounter = 0;
+        this.load("");
     };
 
     this.draw = function() {
@@ -243,6 +141,7 @@ function EtchaController() {
     };
 
     this.step = function() {
+        if (halted) return;
         var instruction = program.charAt(pc);
         switch (instruction) {
             case '+':
@@ -262,24 +161,23 @@ function EtchaController() {
                     pendown = !pendown;
                 }
                 break;
-            /*
             case '[':
                 // [ WHILE Begin a while loop
-                if (ip.get().isZero()) {
+                if (ip.get() === 0) {
                     // skip forwards to matching ]
-                    int depth = 0;
+                    var depth = 0;
                     for (;;) {
                         if (program.charAt(pc) == '[') {
                             depth++;
                         } else if (program.charAt(pc) == ']') {
                             depth--;
-                            if (depth == 0)
+                            if (depth === 0)
                                 break;
                         }
                         pc++;
-                        if (pc >= program.length()) {
+                        if (pc >= program.length) {
                             halted = true;
-                            return errors;
+                            return;
                         }
                     }
                 }
@@ -287,7 +185,7 @@ function EtchaController() {
             case ']':
                 // ] END End a while loop
                 // skip backwards to matching ]
-                int depth = 0;
+                var depth = 0;
                 for (;;) {
                     if (program.charAt(pc) == '[') {
                         depth--;
@@ -295,11 +193,10 @@ function EtchaController() {
                         depth++;
                     }
                     pc--;
-                    if (depth == 0 || pc < 0)
+                    if (depth === 0 || pc < 0)
                         break;
                 }
                 break;
-            */
             default:
                 // NOP
                 break;
@@ -320,6 +217,10 @@ function EtchaController() {
         ip.y = 0;
         ip.dx = 0;
         ip.dy = -1;
+        pendown = true;
+        pencounter = 0;
+        halted = false;
+        pc = 0;
         this.draw();
     };
 };
