@@ -3,7 +3,10 @@ JAVA?=java
 
 all: bin/tc/catseye/etcha/Executor.class
 
-bin/tc/catseye/etcha/Executor.class: src/Etcha.java
+bin:
+	mkdir -p bin
+
+bin/tc/catseye/etcha/Executor.class: bin src/Etcha.java
 	$(JAVAC) -cp bin -d bin src/Etcha.java
 
 clean:
