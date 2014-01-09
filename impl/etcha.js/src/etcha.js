@@ -42,8 +42,14 @@ EtchaPlayfieldView.prototype = new yoob.PlayfieldCanvasView();
 
 
 function EtchaTurtle() {
-    this.penCounter = 0;
-    this.penDown = true;
+    this.reset = function() {
+        this.x = 0;
+        this.y = 0;
+        this.dx = 0;
+        this.dy = -1;
+        this.penCounter = 0;
+        this.penDown = true;
+    };
 
     this.drawContext = function(ctx, x, y, cellWidth, cellHeight) {
         ctx.save();
@@ -82,11 +88,65 @@ function EtchaTurtle() {
 EtchaTurtle.prototype = new yoob.Cursor();
 
 
+function EtchaProgram() {
+    this.setDefault(' ');
+
+    this.getRowExtents = function(targetY) {
+        var minX = undefined;
+        var maxX = undefined;
+        this.foreach(function(x, y, value) {
+            if (y !== targetY) return;
+            if (minX === undefined || x < minX) minX = x;
+            if (maxX === undefined || x > maxX) maxX = x;
+        });
+        return [minX, maxX];
+    };
+};
+EtchaProgram.prototype = new yoob.Playfield();
+
+
+function EtchaProgramCounter() {
+    this.reset = function() {
+        this.x = 0;
+        this.y = 0;
+        this.dx = 1;
+        this.dy = 0;
+    };
+
+    this.advance = function(pf) {
+        this.x++;
+        var y = this.y;
+        var extents = pf.getRowExtents(y);
+        var maxX = extents[1];
+        if (this.x > maxX) {
+            y++;
+            extents = pf.getRowExtents(y);
+            while (extents[0] === undefined && y <= pf.getMaxY()) {
+                y++;
+                extents = pf.getRowExtents(y);
+            }
+            if (extents[0] === undefined) {
+                return false;
+            }   
+            this.x = extents[0];
+            this.y = y;
+        }
+        return true;
+    };
+
+    this.drawContext = function(ctx, x, y, cellWidth, cellHeight) {
+        ctx.fillStyle = "#a0a0ff";
+        ctx.fillRect(x, y, cellWidth, cellHeight);
+    };
+};
+EtchaTurtle.prototype = new yoob.Cursor();
+
+
 function EtchaController() {
     var intervalId;
 
     var p;
-    var ip;
+    var turtle;
     var program;
     var progPf;
     var pc;
@@ -94,17 +154,17 @@ function EtchaController() {
 
     this.init = function(pfView, progView) {
         p = new EtchaPlayfield();
-        ip = new EtchaTurtle(0, 0, 0, -1);
-        pc = new yoob.Cursor(0, 0, 1, 0);
-
         this.pfView = pfView;
         this.pfView.pf = p;
-        this.pfView.setCursors([ip]);
+        turtle = new EtchaTurtle();
+        turtle.reset();
+        this.pfView.setCursors([turtle]);
 
+        progPf = new EtchaProgram();
         this.progView = progView;
-        progPf = new yoob.Playfield();
-        progPf.setDefault(' ');
         this.progView.pf = progPf;
+        pc = new EtchaProgramCounter();
+        pc.reset();
         this.progView.setCursors([pc]);
 
         this.load("");
@@ -121,24 +181,24 @@ function EtchaController() {
         switch (instruction) {
             case '+':
                 // + -- equivalent to FD 1
-                if (ip.penDown) {
-                    p.toggle(ip.x, ip.y);
+                if (turtle.penDown) {
+                    p.toggle(turtle.x, turtle.y);
                 }
-                ip.advance();
+                turtle.advance();
                 break;
             case '>':
                 // > -- equivalent to RT 90; toggles PU/PD every 4 executions
-                ip.rotateClockwise();
-                ip.rotateClockwise();
-                ip.penCounter++;
-                ip.penCounter %= 4;
-                if (ip.penCounter === 0) {
-                    ip.penDown = !ip.penDown;
+                turtle.rotateClockwise();
+                turtle.rotateClockwise();
+                turtle.penCounter++;
+                turtle.penCounter %= 4;
+                if (turtle.penCounter === 0) {
+                    turtle.penDown = !turtle.penDown;
                 }
                 break;
             case '[':
                 // [ WHILE Begin a while loop
-                if (p.get(ip.x, ip.y) === 0) {
+                if (p.get(turtle.x, turtle.y) === 0) {
                     // skip forwards to matching ]
                     var depth = 0;
                     for (;;) {
@@ -149,8 +209,7 @@ function EtchaController() {
                             if (depth === 0)
                                 break;
                         }
-                        pc.advance();
-                        if (pc.x >= program.length) {
+                        if (!pc.advance(progPf)) {
                             halted = true;
                             return;
                         }
@@ -177,8 +236,7 @@ function EtchaController() {
                 break;
         }
 
-        pc.advance();
-        if (pc.x >= program.length) {
+        if (!pc.advance(progPf)) {
             halted = true;
         }
 
@@ -190,16 +248,8 @@ function EtchaController() {
         program = text;
         progPf.clear();
         progPf.load(0, 0, text);
-        ip.x = 0;
-        ip.y = 0;
-        ip.dx = 0;
-        ip.dy = -1;
-        pc.x = 0;
-        pc.y = 0;
-        pc.dx = 1;
-        pc.dy = 0;
-        ip.penDown = true;
-        ip.penCounter = 0;
+        turtle.reset();
+        pc.reset();
         halted = false;
         this.draw();
     };
