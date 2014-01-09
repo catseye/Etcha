@@ -42,6 +42,9 @@ EtchaPlayfieldView.prototype = new yoob.PlayfieldCanvasView();
 
 
 function EtchaTurtle() {
+    this.penCounter = 0;
+    this.penDown = true;
+
     this.drawContext = function(ctx, x, y, cellWidth, cellHeight) {
         ctx.save();
         ctx.globalAlpha = 0.75;
@@ -68,6 +71,11 @@ function EtchaTurtle() {
         }
         ctx.closePath();
         ctx.fill();
+        if (this.penDown) {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(x + cellWidth * 0.4, y + cellHeight * 0.4,
+                         cellWidth * 0.2, cellHeight * 0.2);
+        }
         ctx.restore();
     };
 };
@@ -82,8 +90,6 @@ function EtchaController() {
     var program;
     var progPf;
     var pc;
-    var pendown;
-    var pencounter;
     var halted;
 
     this.init = function(pfView, progView) {
@@ -115,7 +121,7 @@ function EtchaController() {
         switch (instruction) {
             case '+':
                 // + -- equivalent to FD 1
-                if (pendown) {
+                if (ip.penDown) {
                     p.toggle(ip.x, ip.y);
                 }
                 ip.advance();
@@ -124,10 +130,10 @@ function EtchaController() {
                 // > -- equivalent to RT 90; toggles PU/PD every 4 executions
                 ip.rotateClockwise();
                 ip.rotateClockwise();
-                pencounter++;
-                pencounter %= 4;
-                if (pencounter === 0) {
-                    pendown = !pendown;
+                ip.penCounter++;
+                ip.penCounter %= 4;
+                if (ip.penCounter === 0) {
+                    ip.penDown = !ip.penDown;
                 }
                 break;
             case '[':
@@ -192,8 +198,8 @@ function EtchaController() {
         pc.y = 0;
         pc.dx = 1;
         pc.dy = 0;
-        pendown = true;
-        pencounter = 0;
+        ip.penDown = true;
+        ip.penCounter = 0;
         halted = false;
         this.draw();
     };
