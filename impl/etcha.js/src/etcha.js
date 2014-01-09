@@ -30,23 +30,46 @@ function EtchaPlayfieldView() {
         /*
          * The PlayfieldCanvasView draws the cursor before drawing the
          * cells, but our cells are opaque and full-sized, so you can't
-         * see them.  So we have to draw the cursor(s) again, here.
+         * see them.  So we have to draw the cursor again, here.
          */
-        ctx.save();
-        ctx.globalAlpha = 0.75;
-        for (var i = 0; i < this.cursors.length; i++) {
-            var c = this.cursors[i];
-            if (c.x === playfieldX && c.y === playfieldY) {
-                c.drawContext(ctx, canvasX, canvasY, cellWidth, cellHeight);
-            }
+        var c = this.cursors[0];
+        if (c.x === playfieldX && c.y === playfieldY) {
+            c.drawContext(ctx, canvasX, canvasY, cellWidth, cellHeight);
         }
-        ctx.restore();
     };
 };
 EtchaPlayfieldView.prototype = new yoob.PlayfieldCanvasView();
 
 
 function EtchaTurtle() {
+    this.drawContext = function(ctx, x, y, cellWidth, cellHeight) {
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.fillStyle = "#50ff50";
+        ctx.beginPath();
+        if (this.dx === 0 && this.dy === 1) {
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + cellWidth, y);
+            ctx.lineTo(x + cellWidth * 0.5, y + cellHeight); 
+        } else if (this.dx === 0 && this.dy === -1) {
+            ctx.moveTo(x, y + cellWidth);
+            ctx.lineTo(x + cellWidth, y + cellHeight);
+            ctx.lineTo(x + cellWidth * 0.5, y); 
+        } else if (this.dx === 1 && this.dy === 0) {
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + cellWidth, y + cellHeight * 0.5);
+            ctx.lineTo(x, y + cellHeight);
+        } else if (this.dx === -1 && this.dy === 0) {
+            ctx.moveTo(x + cellWidth, y);
+            ctx.lineTo(x, y + cellHeight * 0.5);
+            ctx.lineTo(x + cellWidth, y + cellHeight);
+        } else {
+            ctx.fillRect(x, y, cellWidth, cellHeight);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    };
 };
 EtchaTurtle.prototype = new yoob.Cursor();
 
