@@ -38,37 +38,42 @@ EtchaTurtle.prototype = new yoob.Cursor();
 
 function EtchaController() {
     var intervalId;
-    var canvas;
-    var ctx;
 
     var p;
     var ip;
-    var view;
     var program;
+    var progPf;
     var pc;
     var pendown;
     var pencounter;
     var halted;
 
-    this.init = function(c) {
-        canvas = c;
+    this.init = function(pfView, progView) {
         p = new EtchaPlayfield();
         ip = new EtchaTurtle(0, 0, 0, -1);
-        view = new EtchaPlayfieldView();
-        view.init(p, canvas)
-            .setCursors([ip])
-            .setCellDimensions(12, 12);
-        ctx = canvas.getContext('2d');
+        pc = new yoob.Cursor(0, 0, 1, 0);
+
+        this.pfView = pfView;
+        this.pfView.pf = p;
+        this.pfView.setCursors([ip]);
+
+        this.progView = progView;
+        progPf = new yoob.Playfield();
+        progPf.setDefault(' ');
+        this.progView.pf = progPf;
+        this.progView.setCursors([pc]);
+
         this.load("");
     };
 
     this.draw = function() {
-        view.draw();
+        progView.draw();
+        pfView.draw();
     };
 
     this.step = function() {
         if (halted) return;
-        var instruction = program.charAt(pc);
+        var instruction = progPf.get(pc.x, pc.y);
         switch (instruction) {
             case '+':
                 // + -- equivalent to FD 1
@@ -93,15 +98,15 @@ function EtchaController() {
                     // skip forwards to matching ]
                     var depth = 0;
                     for (;;) {
-                        if (program.charAt(pc) == '[') {
+                        if (progPf.get(pc.x, pc.y) == '[') {
                             depth++;
-                        } else if (program.charAt(pc) == ']') {
+                        } else if (progPf.get(pc.x, pc.y) == ']') {
                             depth--;
                             if (depth === 0)
                                 break;
                         }
-                        pc++;
-                        if (pc >= program.length) {
+                        pc.advance();
+                        if (pc.x >= program.length) {
                             halted = true;
                             return;
                         }
@@ -113,13 +118,13 @@ function EtchaController() {
                 // skip backwards to matching ]
                 var depth = 0;
                 for (;;) {
-                    if (program.charAt(pc) == '[') {
+                    if (progPf.get(pc.x, pc.y) == '[') {
                         depth--;
-                    } else if (program.charAt(pc) == ']') {
+                    } else if (progPf.get(pc.x, pc.y) == ']') {
                         depth++;
                     }
-                    pc--;
-                    if (depth === 0 || pc < 0)
+                    pc.x--;
+                    if (depth === 0 || pc.x < 0)
                         break;
                 }
                 break;
@@ -128,8 +133,8 @@ function EtchaController() {
                 break;
         }
 
-        pc++;
-        if (pc >= program.length) {
+        pc.advance();
+        if (pc.x >= program.length) {
             halted = true;
         }
 
@@ -139,14 +144,19 @@ function EtchaController() {
     this.load = function(text) {
         p.clear();
         program = text;
+        progPf.clear();
+        progPf.load(0, 0, text);
         ip.x = 0;
         ip.y = 0;
         ip.dx = 0;
         ip.dy = -1;
+        pc.x = 0;
+        pc.y = 0;
+        pc.dx = 1;
+        pc.dy = 0;
         pendown = true;
         pencounter = 0;
         halted = false;
-        pc = 0;
         this.draw();
     };
 };

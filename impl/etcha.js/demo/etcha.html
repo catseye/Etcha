@@ -3,9 +3,16 @@
   <meta charset="utf-8">
   <title>Etcha</title>
   <style>
-#canvas { border: 1px solid blue; }
-#canvas_viewport {
-    width: 420px; height: 420px; overflow: scroll; border: 1px solid black;
+#playfield_canvas {
+    border: 1px solid blue;
+    display: block;
+}
+#program_canvas {
+    border: 1px solid red;
+    display: block;
+}
+#display_container {
+    width: 420px; height: 420px; overflow: scroll; border: 1px solid yellow;
 }
 #info { float: right; }
 #program {
@@ -44,8 +51,12 @@ Speed: <input id="speed" type="range" min="0" max="200" value="0" />
   </span>
 </div>
 
-<div id="canvas_viewport">
-  <canvas id="canvas" width="400" height="400">
+<div id="display_container">
+  <canvas id="program_canvas" width="400" height="400">
+    Your browser doesn't support displaying an HTML5 canvas.
+  </canvas>
+
+  <canvas id="playfield_canvas" width="400" height="400">
     Your browser doesn't support displaying an HTML5 canvas.
   </canvas>
 </div>
@@ -64,7 +75,16 @@ Speed: <input id="speed" type="range" min="0" max="200" value="0" />
 <script src="../src/etcha.js"></script>
 <script>
   var c = new EtchaController();
-  c.init(document.getElementById('canvas'));
+
+  var pfView = new EtchaPlayfieldView();
+  pfView.init(null, document.getElementById('playfield_canvas'));
+  pfView.setCellDimensions(12, 12);
+
+  var progView = new yoob.PlayfieldCanvasView();
+  progView.init(null, document.getElementById('program_canvas'));
+  progView.setCellDimensions(undefined, 20);
+
+  c.init(pfView, progView);
   c.connect({
     'start': 'start',
     'stop': 'stop',
@@ -74,7 +94,7 @@ Speed: <input id="speed" type="range" min="0" max="200" value="0" />
     'speed': 'speed',
     'select': 'select_source',
     'source': 'program',
-    'display': 'canvas_viewport'
+    'display': 'display_container'
   });
   c.click_load();
 </script>
