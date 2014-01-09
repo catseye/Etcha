@@ -26,6 +26,21 @@ function EtchaPlayfieldView() {
                              canvasX, canvasY, cellWidth, cellHeight) {
         ctx.fillStyle = value === 0 ? "white" : "black";
         ctx.fillRect(canvasX, canvasY, cellWidth, cellHeight);
+        
+        /*
+         * The PlayfieldCanvasView draws the cursor before drawing the
+         * cells, but our cells are opaque and full-sized, so you can't
+         * see them.  So we have to draw the cursor(s) again, here.
+         */
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        for (var i = 0; i < this.cursors.length; i++) {
+            var c = this.cursors[i];
+            if (c.x === playfieldX && c.y === playfieldY) {
+                c.drawContext(ctx, canvasX, canvasY, cellWidth, cellHeight);
+            }
+        }
+        ctx.restore();
     };
 };
 EtchaPlayfieldView.prototype = new yoob.PlayfieldCanvasView();
