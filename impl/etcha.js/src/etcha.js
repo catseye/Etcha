@@ -21,24 +21,24 @@ function EtchaPlayfield() {
 EtchaPlayfield.prototype = new yoob.Playfield();
 
 
+// An Awkward But Seemingly Successful Attempt at Calling a Super Method
+var proto = new yoob.PlayfieldCanvasView();
 function EtchaPlayfieldView() {
+    yoob.PlayfieldCanvasView.call(this);
+
+    this.init = function(pf, canvas) {
+        proto.init.apply(this, [pf, canvas]);
+        this.drawCursorsFirst = false;
+        return this;
+    };
+
     this.drawCell = function(ctx, value, playfieldX, playfieldY,
                              canvasX, canvasY, cellWidth, cellHeight) {
         ctx.fillStyle = value === 0 ? "white" : "black";
         ctx.fillRect(canvasX, canvasY, cellWidth, cellHeight);
-        
-        /*
-         * The PlayfieldCanvasView draws the cursor before drawing the
-         * cells, but our cells are opaque and full-sized, so you can't
-         * see them.  So we have to draw the cursor again, here.
-         */
-        var c = this.cursors[0];
-        if (c.x === playfieldX && c.y === playfieldY) {
-            c.drawContext(ctx, canvasX, canvasY, cellWidth, cellHeight);
-        }
     };
 };
-EtchaPlayfieldView.prototype = new yoob.PlayfieldCanvasView();
+EtchaPlayfieldView.prototype = proto;
 
 
 function EtchaTurtle() {
