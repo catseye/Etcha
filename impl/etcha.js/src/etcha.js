@@ -8,6 +8,7 @@
  * requires yoob.Playfield
  * requires yoob.Cursor
  * requires yoob.PlayfieldCanvasView
+ * requires yoob.SourceHTMLView
  */
 
 function EtchaPlayfield() {
@@ -88,23 +89,6 @@ function EtchaTurtle() {
 EtchaTurtle.prototype = new yoob.Cursor();
 
 
-function EtchaProgram() {
-    this.setDefault(' ');
-
-    this.getRowExtents = function(targetY) {
-        var minX = undefined;
-        var maxX = undefined;
-        this.foreach(function(x, y, value) {
-            if (y !== targetY) return;
-            if (minX === undefined || x < minX) minX = x;
-            if (maxX === undefined || x > maxX) maxX = x;
-        });
-        return [minX, maxX];
-    };
-};
-EtchaProgram.prototype = new yoob.Playfield();
-
-
 function EtchaProgramCounter() {
     this.reset = function() {
         this.x = 0;
@@ -113,38 +97,18 @@ function EtchaProgramCounter() {
         this.dy = 0;
     };
 
-    this.advance = function(pf) {
+    this.advance = function(program) {
         this.x++;
-        var y = this.y;
-        var extents = pf.getRowExtents(y);
-        var maxX = extents[1];
-        if (this.x > maxX) {
-            y++;
-            extents = pf.getRowExtents(y);
-            while (extents[0] === undefined && y <= pf.getMaxY()) {
-                y++;
-                extents = pf.getRowExtents(y);
-            }
-            if (extents[0] === undefined) {
-                return false;
-            }   
-            this.x = extents[0];
-            this.y = y;
+        if (this.x <= program.length - 1) {
+            return true;
         }
-        return true;
-    };
-
-    this.drawContext = function(ctx, x, y, cellWidth, cellHeight) {
-        ctx.fillStyle = "#a0a0ff";
-        ctx.fillRect(x, y, cellWidth, cellHeight);
+        return false;
     };
 };
-EtchaTurtle.prototype = new yoob.Cursor();
+EtchaProgramCounter.prototype = new yoob.Cursor();
 
 
 function EtchaController() {
-    var intervalId;
-
     var p;
     var turtle;
     var program;
@@ -160,9 +124,7 @@ function EtchaController() {
         turtle.reset();
         this.pfView.setCursors([turtle]);
 
-        progPf = new EtchaProgram();
         this.progView = progView;
-        this.progView.pf = progPf;
         pc = new EtchaProgramCounter();
         pc.reset();
         this.progView.setCursors([pc]);
@@ -171,13 +133,14 @@ function EtchaController() {
     };
 
     this.draw = function() {
-        progView.draw();
-        pfView.draw();
+        this.progView.setSourceText(program);
+        this.progView.draw();
+        this.pfView.draw();
     };
 
     this.step = function() {
         if (halted) return;
-        var instruction = progPf.get(pc.x, pc.y);
+        var instruction = program.charAt(pc.x);
         switch (instruction) {
             case '+':
                 // + -- equivalent to FD 1
@@ -202,14 +165,14 @@ function EtchaController() {
                     // skip forwards to matching ]
                     var depth = 0;
                     for (;;) {
-                        if (progPf.get(pc.x, pc.y) == '[') {
+                        if (program.charAt(pc.x) == '[') {
                             depth++;
-                        } else if (progPf.get(pc.x, pc.y) == ']') {
+                        } else if (program.charAt(pc.x) == ']') {
                             depth--;
                             if (depth === 0)
                                 break;
                         }
-                        if (!pc.advance(progPf)) {
+                        if (!pc.advance(program)) {
                             halted = true;
                             return;
                         }
@@ -221,9 +184,9 @@ function EtchaController() {
                 // skip backwards to matching ]
                 var depth = 0;
                 for (;;) {
-                    if (progPf.get(pc.x, pc.y) == '[') {
+                    if (program.charAt(pc.x) == '[') {
                         depth--;
-                    } else if (progPf.get(pc.x, pc.y) == ']') {
+                    } else if (program.charAt(pc.x) == ']') {
                         depth++;
                     }
                     pc.x--;
@@ -236,7 +199,7 @@ function EtchaController() {
                 break;
         }
 
-        if (!pc.advance(progPf)) {
+        if (!pc.advance(program)) {
             halted = true;
         }
 
@@ -246,8 +209,7 @@ function EtchaController() {
     this.load = function(text) {
         p.clear();
         program = text;
-        progPf.clear();
-        progPf.load(0, 0, text);
+        this.progView.setSourceText(program);
         turtle.reset();
         pc.reset();
         halted = false;
