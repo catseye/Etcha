@@ -129,6 +129,8 @@ function EtchaController() {
         pc.reset();
         this.progView.setCursors([pc]);
 
+        this.repeatIndefinitely = false;
+
         this.load("");
     };
 
@@ -139,7 +141,14 @@ function EtchaController() {
     };
 
     this.step = function() {
-        if (halted) return;
+        if (halted) {
+            if (this.repeatIndefinitely) {
+                pc.reset();
+                halted = false;
+            } else {
+                return;
+            }
+        }
         var instruction = program.charAt(pc.x);
         switch (instruction) {
             case '+':
@@ -214,6 +223,10 @@ function EtchaController() {
         pc.reset();
         halted = false;
         this.draw();
+    };
+
+    this.setRepeatIndefinitely = function(value) {
+        this.repeatIndefinitely = value;
     };
 };
 EtchaController.prototype = new yoob.Controller();

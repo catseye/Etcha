@@ -41,6 +41,11 @@ Etcha on:
 <button id="stop">Stop</button>
 <button id="step">Step</button>
 Speed: <input id="speed" type="range" min="0" max="200" value="0" />
+<label for="repeat_indefinitely">
+  <input type="checkbox" name="repeat_indefinitely" id="repeat_indefinitely"
+         onchange="c.setRepeatIndefinitely(this.checked);">
+  repeat indefinitely
+</label>
 
 <div>
   example source:
