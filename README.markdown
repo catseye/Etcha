@@ -53,7 +53,7 @@ Examples
     -> Tests for functionality "Interpret Etcha Program"
 
     -> Functionality "Interpret Etcha Program" is implemented by shell
-    -> command "java -cp bin tc.catseye.etcha.Main %(test-file)"
+    -> command "java -cp bin tc.catseye.etcha.Main %(test-body-file)"
 
     | >+++>+++>+++>+++>[+]>>>>+
     = ----
