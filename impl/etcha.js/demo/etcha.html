@@ -100,6 +100,6 @@ Speed: <input id="speed" type="range" min="0" max="200" value="0" />
   e = (new yoob.PresetManager()).init({
     selectElem: document.getElementById('select_source'),
     controller: c
-  }).populateFromClass('example_program');
+  }).populateFromClass('example_program').select('silly-little-thing');
   c.click_load();
 </script>
