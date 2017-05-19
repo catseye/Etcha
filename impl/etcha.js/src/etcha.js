@@ -22,24 +22,16 @@ function EtchaPlayfield() {
 EtchaPlayfield.prototype = new yoob.Playfield();
 
 
-// An Awkward But Seemingly Successful Attempt at Calling a Super Method
-var proto = new yoob.PlayfieldCanvasView();
-function EtchaPlayfieldView() {
-    yoob.PlayfieldCanvasView.call(this);
-
-    this.init = function(pf, canvas) {
-        proto.init.apply(this, [pf, canvas]);
-        this.drawCursorsFirst = false;
-        return this;
-    };
-
-    this.drawCell = function(ctx, value, playfieldX, playfieldY,
-                             canvasX, canvasY, cellWidth, cellHeight) {
+function makeEtchaPlayfieldView(cfg) {
+    cfg.drawCursorsFirst = false;
+    var pfView = new yoob.PlayfieldCanvasView().init(cfg);
+    pfView.drawCell = function(ctx, value, playfieldX, playfieldY,
+                               canvasX, canvasY, cellWidth, cellHeight) {
         ctx.fillStyle = value === 0 ? "white" : "black";
         ctx.fillRect(canvasX, canvasY, cellWidth, cellHeight);
     };
+    return pfView;
 };
-EtchaPlayfieldView.prototype = proto;
 
 
 function EtchaTurtle() {
@@ -104,25 +96,31 @@ function EtchaProgramCounter() {
         }
         return false;
     };
+
+    this.wrapText = function(text) {
+        var fillStyle = this.fillStyle || "#50ff50";
+        return '<span style="background: ' + fillStyle + '">' +
+               text + '</span>';
+    };
 };
 EtchaProgramCounter.prototype = new yoob.Cursor();
 
 
+var proto = new yoob.Controller();
 function EtchaController() {
-    var p;
-    var turtle;
-    var program;
     var progPf;
     var pc;
-    var halted;
 
-    this.init = function(pfView, progView) {
-        p = new EtchaPlayfield();
-        this.pfView = pfView;
-        this.pfView.pf = p;
-        turtle = new EtchaTurtle();
-        turtle.reset();
-        this.pfView.setCursors([turtle]);
+    this.init = function(cfg) {
+        this.playfield = new EtchaPlayfield();
+        proto.init.apply(this, [cfg]);
+
+        this.pfView = cfg.pfView;
+
+        this.pfView.pf = this.playfield;
+        this.turtle = new EtchaTurtle();
+        this.turtle.reset();
+        this.playfield.setCursors([this.turtle]);
 
         this.progView = progView;
         pc = new EtchaProgramCounter();
@@ -131,58 +129,60 @@ function EtchaController() {
 
         this.repeatIndefinitely = false;
 
-        this.load("");
+        this.reset("");
+
+        return this;
     };
 
     this.draw = function() {
-        this.progView.setSourceText(program);
+        this.progView.setSourceText(this.program);
         this.progView.draw();
         this.pfView.draw();
     };
 
     this.step = function() {
-        if (halted) {
+        if (this.halted) {
             if (this.repeatIndefinitely) {
                 pc.reset();
-                halted = false;
+                this.halted = false;
             } else {
                 return;
             }
         }
-        var instruction = program.charAt(pc.x);
+        var instruction = this.program.charAt(pc.x);
         switch (instruction) {
             case '+':
                 // + -- equivalent to FD 1
-                if (turtle.penDown) {
-                    p.toggle(turtle.x, turtle.y);
+                if (this.turtle.penDown) {
+                    this.playfield.toggle(this.turtle.x, this.turtle.y);
                 }
-                turtle.advance();
+                this.turtle.advance();
                 break;
             case '>':
                 // > -- equivalent to RT 90; toggles PU/PD every 4 executions
-                turtle.rotateClockwise();
-                turtle.rotateClockwise();
-                turtle.penCounter++;
-                turtle.penCounter %= 4;
-                if (turtle.penCounter === 0) {
-                    turtle.penDown = !turtle.penDown;
+                this.turtle.rotateClockwise();
+                this.turtle.rotateClockwise();
+                this.turtle.penCounter++;
+                this.turtle.penCounter %= 4;
+                if (this.turtle.penCounter === 0) {
+                    this.turtle.penDown = !this.turtle.penDown;
                 }
                 break;
             case '[':
                 // [ WHILE Begin a while loop
-                if (p.get(turtle.x, turtle.y) === 0) {
+                if (this.playfield.get(this.turtle.x, this.turtle.y) === 0) {
                     // skip forwards to matching ]
                     var depth = 0;
                     for (;;) {
-                        if (program.charAt(pc.x) == '[') {
+                        if (this.program.charAt(pc.x) == '[') {
                             depth++;
-                        } else if (program.charAt(pc.x) == ']') {
+                        } else if (this.program.charAt(pc.x) == ']') {
                             depth--;
                             if (depth === 0)
                                 break;
                         }
-                        if (!pc.advance(program)) {
-                            halted = true;
+                        if (!pc.advance(this.program)) {
+                            this.halted = true;
                             return;
                         }
                     }
@@ -193,9 +193,9 @@ function EtchaController() {
                 // skip backwards to matching ]
                 var depth = 0;
                 for (;;) {
-                    if (program.charAt(pc.x) == '[') {
+                    if (this.program.charAt(pc.x) == '[') {
                         depth--;
-                    } else if (program.charAt(pc.x) == ']') {
+                    } else if (this.program.charAt(pc.x) == ']') {
                         depth++;
                     }
                     pc.x--;
@@ -208,20 +208,20 @@ function EtchaController() {
                 break;
         }
 
-        if (!pc.advance(program)) {
-            halted = true;
+        if (!pc.advance(this.program)) {
+            this.halted = true;
         }
 
         this.draw();
     };
 
-    this.load = function(text) {
-        p.clear();
-        program = text;
-        this.progView.setSourceText(program);
-        turtle.reset();
+    this.reset = function(text) {
+        this.playfield.clear();
+        this.program = text;
+        this.progView.setSourceText(this.program);
+        this.turtle.reset();
         pc.reset();
-        halted = false;
+        this.halted = false;
         this.draw();
     };
 
@@ -229,4 +229,4 @@ function EtchaController() {
         this.repeatIndefinitely = value;
     };
 };
-EtchaController.prototype = new yoob.Controller();
+EtchaController.prototype = proto;

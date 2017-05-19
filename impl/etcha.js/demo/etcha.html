@@ -36,18 +36,15 @@ Etcha on:
 
 <h1>Etcha</h1>
 
-<button id="load">Load</button>
-<button id="edit">Edit</button>
-<button id="start">Start</button>
-<button id="stop">Stop</button>
-<button id="step">Step</button>
-<button id="reset">Reset</button>
-Speed: <input id="speed" type="range" min="0" max="200" value="0" />
-<label for="repeat_indefinitely">
-  <input type="checkbox" name="repeat_indefinitely" id="repeat_indefinitely"
-         onchange="c.setRepeatIndefinitely(this.checked);">
-  repeat indefinitely
-</label>
+<div id="control_panel"></div>
+
+<div id="control_panel2">
+  <label for="repeat_indefinitely">
+    <input type="checkbox" name="repeat_indefinitely" id="repeat_indefinitely"
+           onchange="c.setRepeatIndefinitely(this.checked);">
+    repeat indefinitely
+  </label>
+</div>
 
 <div>
   example source: <select id="select_source"></select>
@@ -61,11 +58,13 @@ Speed: <input id="speed" type="range" min="0" max="200" value="0" />
   </canvas>
 </div>
 
-<textarea id="program" rows="25" cols="40">
-</textarea>
+<textarea id="editor" rows="25" cols="40"></textarea>
 
 <div id="silly-little-thing" class="example_program"
 >&gt;+++&gt;+++&gt;+++&gt;+++&gt;[+]&gt;&gt;&gt;&gt;+</div>
+
+<div id="trivial-thing" class="example_program"
+>&gt;&gt;+++&gt;&gt;+</div>
 
 </body>
 <script src="../src/yoob/controller.js"></script>
@@ -74,32 +73,41 @@ Speed: <input id="speed" type="range" min="0" max="200" value="0" />
 <script src="../src/yoob/playfield-canvas-view.js"></script>
 <script src="../src/yoob/source-html-view.js"></script>
 <script src="../src/yoob/preset-manager.js"></script>
+<script src="../src/yoob/source-manager.js"></script>
 <script src="../src/etcha.js"></script>
 <script>
-  var c = new EtchaController();
+  var controlPanel = document.getElementById('control_panel');
+  var display = document.getElementById('display_container');
 
-  var pfView = new EtchaPlayfieldView();
-  pfView.init(null, document.getElementById('playfield_canvas'));
+  var pfView = makeEtchaPlayfieldView({
+      canvas: document.getElementById('playfield_canvas')
+  });
   pfView.setCellDimensions(12, 12);
 
   var progView = new yoob.SourceHTMLView();
   progView.init('', document.getElementById('program_display'));
 
-  c.init(pfView, progView);
-  c.connect({
-    'start': 'start',
-    'stop': 'stop',
-    'step': 'step',
-    'load': 'load',
-    'edit': 'edit',
-    'reset': 'reset',
-    'speed': 'speed',
-    'source': 'program',
-    'display': 'display_container'
+  var c = (new EtchaController()).init({
+      panelContainer: controlPanel,
+      view: progView,
+      pfView: pfView
   });
-  e = (new yoob.PresetManager()).init({
+
+  var sourceManager = (new yoob.SourceManager()).init({
+      panelContainer: controlPanel,
+      editor: document.getElementById('editor'),
+      hideDuringEdit: [display],
+      disableDuringEdit: [c.panel],
+      storageKey: 'etcha.js',
+      onDone: function() {
+          c.performReset(this.getEditorText());
+      }
+  });
+
+  var presetManager = (new yoob.PresetManager()).init({
     selectElem: document.getElementById('select_source'),
-    controller: c
+    setPreset: function(id) {
+      sourceManager.loadSourceFromHTML(document.getElementById(id).innerHTML);
+    }
   }).populateFromClass('example_program').select('silly-little-thing');
-  c.click_load();
 </script>
