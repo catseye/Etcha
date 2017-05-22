@@ -25,11 +25,47 @@ EtchaPlayfield.prototype = new yoob.Playfield();
 function makeEtchaPlayfieldView(cfg) {
     cfg.drawCursorsFirst = false;
     var pfView = new yoob.PlayfieldCanvasView().init(cfg);
+
     pfView.drawCell = function(ctx, value, playfieldX, playfieldY,
                                canvasX, canvasY, cellWidth, cellHeight) {
         ctx.fillStyle = value === 0 ? "white" : "black";
         ctx.fillRect(canvasX, canvasY, cellWidth, cellHeight);
     };
+
+    pfView.drawCursor = function(ctx, cursor, x, y, cellWidth, cellHeight) {
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.fillStyle = "#50ff50";
+        ctx.beginPath();
+        if (cursor.dx === 0 && cursor.dy === 1) {
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + cellWidth, y);
+            ctx.lineTo(x + cellWidth * 0.5, y + cellHeight); 
+        } else if (cursor.dx === 0 && cursor.dy === -1) {
+            ctx.moveTo(x, y + cellWidth);
+            ctx.lineTo(x + cellWidth, y + cellHeight);
+            ctx.lineTo(x + cellWidth * 0.5, y); 
+        } else if (cursor.dx === 1 && cursor.dy === 0) {
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + cellWidth, y + cellHeight * 0.5);
+            ctx.lineTo(x, y + cellHeight);
+        } else if (cursor.dx === -1 && cursor.dy === 0) {
+            ctx.moveTo(x + cellWidth, y);
+            ctx.lineTo(x, y + cellHeight * 0.5);
+            ctx.lineTo(x + cellWidth, y + cellHeight);
+        } else {
+            ctx.fillRect(x, y, cellWidth, cellHeight);
+        }
+        ctx.closePath();
+        ctx.fill();
+        if (cursor.penDown) {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(x + cellWidth * 0.4, y + cellHeight * 0.4,
+                         cellWidth * 0.2, cellHeight * 0.2);
+        }
+        ctx.restore();
+    };
+
     return pfView;
 };
 
@@ -42,40 +78,6 @@ function EtchaTurtle() {
         this.dy = -1;
         this.penCounter = 0;
         this.penDown = true;
-    };
-
-    this.drawContext = function(ctx, x, y, cellWidth, cellHeight) {
-        ctx.save();
-        ctx.globalAlpha = 0.75;
-        ctx.fillStyle = "#50ff50";
-        ctx.beginPath();
-        if (this.dx === 0 && this.dy === 1) {
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + cellWidth, y);
-            ctx.lineTo(x + cellWidth * 0.5, y + cellHeight); 
-        } else if (this.dx === 0 && this.dy === -1) {
-            ctx.moveTo(x, y + cellWidth);
-            ctx.lineTo(x + cellWidth, y + cellHeight);
-            ctx.lineTo(x + cellWidth * 0.5, y); 
-        } else if (this.dx === 1 && this.dy === 0) {
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + cellWidth, y + cellHeight * 0.5);
-            ctx.lineTo(x, y + cellHeight);
-        } else if (this.dx === -1 && this.dy === 0) {
-            ctx.moveTo(x + cellWidth, y);
-            ctx.lineTo(x, y + cellHeight * 0.5);
-            ctx.lineTo(x + cellWidth, y + cellHeight);
-        } else {
-            ctx.fillRect(x, y, cellWidth, cellHeight);
-        }
-        ctx.closePath();
-        ctx.fill();
-        if (this.penDown) {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(x + cellWidth * 0.4, y + cellHeight * 0.4,
-                         cellWidth * 0.2, cellHeight * 0.2);
-        }
-        ctx.restore();
     };
 };
 EtchaTurtle.prototype = new yoob.Cursor();
