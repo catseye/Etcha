@@ -22,7 +22,6 @@
 #load {
   display: none;
 }
-.example_program { display: none; }
   </style>
 </head>
 <body>
@@ -60,12 +59,6 @@ Etcha on:
 
 <textarea id="editor" rows="25" cols="40"></textarea>
 
-<div id="silly-little-thing" class="example_program"
->&gt;+++&gt;+++&gt;+++&gt;+++&gt;[+]&gt;&gt;&gt;&gt;+</div>
-
-<div id="trivial-thing" class="example_program"
->&gt;&gt;+++&gt;&gt;+</div>
-
 </body>
 <script src="../src/yoob/controller.js"></script>
 <script src="../src/yoob/playfield.js"></script>
@@ -75,6 +68,7 @@ Etcha on:
 <script src="../src/yoob/preset-manager.js"></script>
 <script src="../src/yoob/source-manager.js"></script>
 <script src="../src/etcha.js"></script>
+<script src="../../../eg/index.js"></script>
 <script>
   var controlPanel = document.getElementById('control_panel');
   var display = document.getElementById('display_container');
@@ -106,8 +100,14 @@ Etcha on:
 
   var presetManager = (new yoob.PresetManager()).init({
     selectElem: document.getElementById('select_source'),
-    setPreset: function(id) {
-      sourceManager.loadSourceFromHTML(document.getElementById(id).innerHTML);
+  });
+  function makeCallback(sourceText) {
+    return function(id) {
+      sourceManager.loadSource(sourceText);
     }
-  }).populateFromClass('example_program').select('silly-little-thing');
+  }
+  for (var i = 0; i < examplePrograms.length; i++) {
+    presetManager.add(examplePrograms[i][0], makeCallback(examplePrograms[i][1]));
+  }
+  presetManager.select(examplePrograms[0][0]);
 </script>
