@@ -124,7 +124,7 @@ function EtchaController() {
         this.turtle.reset();
         this.playfield.setCursors([this.turtle]);
 
-        this.progView = progView;
+        this.progView = cfg.view;
         pc = new EtchaProgramCounter();
         pc.reset();
         this.progView.setCursors([pc]);
