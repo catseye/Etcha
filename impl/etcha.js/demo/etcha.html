@@ -35,79 +35,11 @@ Etcha on:
 
 <h1>Etcha</h1>
 
-<div id="control_panel"></div>
-
-<div id="control_panel2">
-  <label for="repeat_indefinitely">
-    <input type="checkbox" name="repeat_indefinitely" id="repeat_indefinitely"
-           onchange="c.setRepeatIndefinitely(this.checked);">
-    repeat indefinitely
-  </label>
-</div>
-
-<div>
-  example source: <select id="select_source"></select>
-</div>
-
-<div id="display_container">
-  <pre id="program_display"></pre>
-
-  <canvas id="playfield_canvas" width="400" height="400">
-    Your browser doesn't support displaying an HTML5 canvas.
-  </canvas>
-</div>
-
-<textarea id="editor" rows="25" cols="40"></textarea>
+<div id="container"></div>
 
 </body>
-<script src="../src/yoob/controller.js"></script>
-<script src="../src/yoob/playfield.js"></script>
-<script src="../src/yoob/cursor.js"></script>
-<script src="../src/yoob/playfield-canvas-view.js"></script>
-<script src="../src/yoob/source-html-view.js"></script>
-<script src="../src/yoob/preset-manager.js"></script>
-<script src="../src/yoob/source-manager.js"></script>
-<script src="../src/etcha.js"></script>
 <script src="../../../eg/index.js"></script>
+<script src="../src/etcha-launcher.js"></script>
 <script>
-  var controlPanel = document.getElementById('control_panel');
-  var display = document.getElementById('display_container');
-
-  var pfView = makeEtchaPlayfieldView({
-      canvas: document.getElementById('playfield_canvas')
-  });
-  pfView.setCellDimensions(12, 12);
-
-  var progView = new yoob.SourceHTMLView();
-  progView.init('', document.getElementById('program_display'));
-
-  var c = (new EtchaController()).init({
-      panelContainer: controlPanel,
-      view: progView,
-      pfView: pfView
-  });
-
-  var sourceManager = (new yoob.SourceManager()).init({
-      panelContainer: controlPanel,
-      editor: document.getElementById('editor'),
-      hideDuringEdit: [display],
-      disableDuringEdit: [c.panel],
-      storageKey: 'etcha.js',
-      onDone: function() {
-          c.performReset(this.getEditorText());
-      }
-  });
-
-  var presetManager = (new yoob.PresetManager()).init({
-    selectElem: document.getElementById('select_source'),
-  });
-  function makeCallback(sourceText) {
-    return function(id) {
-      sourceManager.loadSource(sourceText);
-    }
-  }
-  for (var i = 0; i < examplePrograms.length; i++) {
-    presetManager.add(examplePrograms[i][0], makeCallback(examplePrograms[i][1]));
-  }
-  presetManager.select(examplePrograms[0][0]);
+  launch('../src/', 'container');
 </script>
