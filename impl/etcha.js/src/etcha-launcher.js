@@ -25,7 +25,7 @@ function launch(prefix, container, config) {
     "yoob/playfield-canvas-view.js",
     "yoob/source-html-view.js",
     "yoob/preset-manager.js",
-    "yoob/source-manager.js",
+    "yoob/source-manager.js"
   ], function() {
     loadThese(["etcha.js"], function() {
       var etchaController;
