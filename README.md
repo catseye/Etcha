@@ -3,9 +3,9 @@ The Etcha Programming Language
 
 _Try it online_ [@ catseye.tc](https://catseye.tc/installation/Etcha)
 | _Wiki entry_ [@ esolangs.org](https://esolangs.org/wiki/Etcha)
-| _See also:_ [Whothm](https://github.com/catseye/Whothm#readme)
-∘ [Wunnel](https://github.com/catseye/Wunnel#readme)
-∘ [Gemooy](https://github.com/catseye/Gemooy#readme)
+| _See also:_ [Whothm](https://codeberg.org/catseye/Whothm#the-whothm-drawing-language)
+∘ [Wunnel](https://codeberg.org/catseye/Wunnel#wunnel)
+∘ [Gemooy](https://codeberg.org/catseye/Gemooy#gemooy)
 
 - - - -
 
